@@ -44,7 +44,7 @@ func (s *CmdCtlStop) ParseArgv(ctx *cli.Context) error {
 }
 
 func (s *CmdCtlStop) Run() (err error) {
-	return CtlServiceStop(s.G())
+	return CtlServiceStopAll(s.G())
 
 }
 

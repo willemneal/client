@@ -82,3 +82,11 @@ func CtlServiceStop(g *libkb.GlobalContext) error {
 	}
 	return cli.Stop(context.TODO(), keybase1.StopArg{ExitCode: keybase1.ExitCode_OK})
 }
+
+func CtlServiceStopAll(g *libkb.GlobalContext) error {
+	cli, err := GetCtlClient(g)
+	if err != nil {
+		return err
+	}
+	return cli.StopAll(context.TODO(), keybase1.StopAllArg{ExitCode: keybase1.ExitCode_OK})
+}

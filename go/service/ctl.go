@@ -32,6 +32,12 @@ func (c *CtlHandler) Stop(_ context.Context, args keybase1.StopArg) error {
 	return nil
 }
 
+func (c *CtlHandler) StopAll(_ context.Context, args keybase1.StopAllArg) error {
+	c.G().Log.Debug("Received stopAll(%d) RPC; shutting down", args.ExitCode)
+	go c.service.StopAll(args.ExitCode)
+	return nil
+}
+
 func (c *CtlHandler) LogRotate(_ context.Context, sessionID int) error {
 	logFile, _ := c.G().Env.GetEffectiveLogFile()
 	// Redirect to log file even if not explicitly desired during service call

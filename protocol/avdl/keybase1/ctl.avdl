@@ -25,6 +25,7 @@ protocol ctl {
 
 
   void stop(int sessionID, ExitCode exitCode);
+  void stopAll(int sessionID, ExitCode exitCode);
   void logRotate(int sessionID);
   void reload(int sessionID);
   void dbNuke(int sessionID);

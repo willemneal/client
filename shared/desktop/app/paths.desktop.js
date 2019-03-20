@@ -35,7 +35,7 @@ export function appInstallerPath() {
   return path.resolve(resourcesPath, 'KeybaseInstaller.app', 'Contents', 'MacOS', 'Keybase')
 }
 
-// Path to keybase executable (darwin only), null if not available
+// Path to keybase executable, null if not available
 export function keybaseBinPath() {
   if (os.platform() === 'win32') {
     var kbPath = SafeElectron.getApp()
@@ -48,7 +48,8 @@ export function keybaseBinPath() {
     }
     return path.resolve(String(kbPath), 'Keybase', 'keybase.exe')
   }
-  if (os.platform() !== 'darwin') return null
+  // assume keybase is in user's $PATH on linux/bsd
+  if (os.platform() !== 'darwin') return path.resolve('/usr', 'bin', 'keybase')
   const bundlePath = appBundlePath()
   if (bundlePath === null) return null
   return path.resolve(bundlePath, 'Contents', 'SharedSupport', 'bin', 'keybase')
