@@ -20,6 +20,10 @@ func NewCmdCtlStop(cl *libcmdline.CommandLine, g *libkb.GlobalContext) cli.Comma
 				Name:  "shutdown",
 				Usage: "A no-op flag for linux, since that is the default behavior; the service will just shutdown",
 			},
+			cli.BoolFlag{
+				Name:  "all",
+				Usage: "Shut down the GUI, KBFS, and the redirector as well",
+			},
 		},
 		Action: func(c *cli.Context) {
 			cl.ChooseCommand(newCmdCtlStop(g), "stop", c)
@@ -37,15 +41,20 @@ func newCmdCtlStop(g *libkb.GlobalContext) *CmdCtlStop {
 
 type CmdCtlStop struct {
 	libkb.Contextified
+	all bool
 }
 
 func (s *CmdCtlStop) ParseArgv(ctx *cli.Context) error {
+	s.all = ctx.Bool("all")
 	return nil
 }
 
 func (s *CmdCtlStop) Run() (err error) {
-	return CtlServiceStopAll(s.G())
-
+	if s.all {
+		return CtlServiceStopAll(s.G())
+	} else {
+		return CtlServiceStop(s.G())
+	}
 }
 
 func (s *CmdCtlStop) GetUsage() libkb.Usage {

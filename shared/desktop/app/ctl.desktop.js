@@ -13,7 +13,7 @@ export function ctlStop(callback: any) {
     plat = 'win32'
   }
   if (isLinux) {
-    args = ['ctl', 'stop']
+    args = ['ctl', 'stop', '--all']
     plat = 'linux'
   }
   exec(binPath, args, plat, 'prod', false, callback)
