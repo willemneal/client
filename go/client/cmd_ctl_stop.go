@@ -52,9 +52,8 @@ func (s *CmdCtlStop) ParseArgv(ctx *cli.Context) error {
 func (s *CmdCtlStop) Run() (err error) {
 	if s.all {
 		return CtlServiceStopAll(s.G())
-	} else {
-		return CtlServiceStop(s.G())
 	}
+	return CtlServiceStop(s.G())
 }
 
 func (s *CmdCtlStop) GetUsage() libkb.Usage {
