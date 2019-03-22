@@ -340,11 +340,13 @@ func configureProcesses(g *libkb.GlobalContext, cl *libcmdline.CommandLine, cmd 
 		}
 	} else {
 		// If this command warrants an autofork, do it now.
-		if fc == libcmdline.ForceFork || g.Env.GetAutoFork() {
+		if fc == libcmdline.ForceFork {
 			newProc, err = client.AutoForkServer(g, cl)
 			if err != nil {
 				return err
 			}
+		} else {
+			return fmt.Errorf("Keybase service not running; start it with `run_keybase` or `keybase ctl start`.")
 		}
 	}
 
