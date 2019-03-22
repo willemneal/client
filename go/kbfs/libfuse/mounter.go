@@ -112,7 +112,7 @@ func (m *mounter) Unmount() (err error) {
 			defer m.DeleteMountdirIfEmpty()
 		}
 		// Ignore errors where the mount was never mounted in the first place
-		if err != nil && !isFusermountMountNotFoundError(fusermountErr) {
+		if fusermountErr != nil && !isFusermountMountNotFoundError(fusermountErr) {
 			err = fusermountErr
 		}
 	default:
