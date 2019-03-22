@@ -2,7 +2,7 @@
 import * as SafeElectron from '../../util/safe-electron.desktop'
 import {keybaseBinPath} from './paths.desktop'
 import exec from './exec.desktop'
-import {isWindows,isLinux} from '../../constants/platform'
+import {isWindows, isLinux} from '../../constants/platform'
 
 export function ctlStop(callback: any) {
   const binPath = keybaseBinPath()
