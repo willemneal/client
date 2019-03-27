@@ -33,6 +33,7 @@ const (
 	// How long to block on favorites refresh when cache is expired (e.g.,
 	// on startup). Reasonably low in case we're offline.
 	favoritesServerTimeoutWhenCacheExpired = 500 * time.Millisecond
+	favoritesBackgroundRefreshTimeout      = 15 * time.Second
 )
 
 var errNoFavoritesCache = errors.New("disk favorites cache not present")
@@ -86,8 +87,10 @@ type Favorites struct {
 	// homeTLFInfo stores the IDs for the logged-in user's home TLFs
 	homeTLFInfo homeTLFInfo
 
-	// Channels for interacting with the favorites cache
+	// Channel for interacting with the favorites cache
 	reqChan chan *favReq
+	// Channel that is full when there is already a refresh queued
+	refreshWaiting chan struct{}
 
 	wg kbfssync.RepeatedWaitGroup
 
@@ -127,10 +130,11 @@ func newFavoritesWithChan(config Config, reqChan chan *favReq) *Favorites {
 	}
 
 	f := &Favorites{
-		config:       config,
-		reqChan:      reqChan,
-		inFlightAdds: make(map[favorites.Folder]*favReq),
-		log:          log,
+		config:         config,
+		reqChan:        reqChan,
+		refreshWaiting: make(chan struct{}, 1),
+		inFlightAdds:   make(map[favorites.Folder]*favReq),
+		log:            log,
 	}
 
 	return f
@@ -317,6 +321,10 @@ func favoriteToFolder(fav favorites.Folder, data favorites.Data) keybase1.Folder
 func (f *Favorites) handleReq(req *favReq) (err error) {
 	defer func() { f.closeReq(req, err) }()
 
+	if req.refresh {
+		<-f.refreshWaiting
+	}
+
 	kbpki := f.config.KBPKI()
 	// Fetch a new list if:
 	//  (1) The user asked us to refresh
@@ -330,9 +338,10 @@ func (f *Favorites) handleReq(req *favReq) (err error) {
 	if needFetch || wantFetch {
 		getCtx := req.ctx
 		if !needFetch {
-			timeoutCtx, cancel := context.WithTimeout(req.ctx, favoritesServerTimeoutWhenCacheExpired)
+			var cancel context.CancelFunc
+			getCtx, cancel = context.WithTimeout(req.ctx,
+				favoritesServerTimeoutWhenCacheExpired)
 			defer cancel()
-			getCtx = timeoutCtx
 		}
 		// load cache from server
 		favResult, err := kbpki.FavoriteList(getCtx)
@@ -349,8 +358,9 @@ func (f *Favorites) handleReq(req *favReq) (err error) {
 			// If we weren't explicitly asked to refresh, we can return possibly
 			// stale favorites rather than return nothing.
 			if err == context.DeadlineExceeded {
-				// TODO: make sure this doesn't get queued like 10 times
-				go f.RefreshCache(context.Background())
+				newCtx, _ := context.WithTimeout(context.Background(),
+					favoritesBackgroundRefreshTimeout)
+				go f.RefreshCache(newCtx)
 			}
 			f.log.CDebugf(req.ctx,
 				"Serving possibly stale favorites; new data could not be"+
@@ -472,7 +482,6 @@ func (f *Favorites) handleReq(req *favReq) (err error) {
 			IgnoredFolders:  ignoredFolders,
 			FavoriteFolders: favFolders,
 		}
-		// TODO: send info on reset users
 	}
 
 	if req.homeTLFInfo != nil {
@@ -638,6 +647,13 @@ func (f *Favorites) RefreshCache(ctx context.Context) {
 	if f.disabled || f.hasShutdown() {
 		return
 	}
+
+	select {
+	case f.refreshWaiting <- struct{}{}:
+	default:
+		// There is already a refresh in the queue
+		return
+	}
 	// This request is non-blocking, so use a throw-away done channel
 	// and context.
 	req := &favReq{
@@ -650,6 +666,7 @@ func (f *Favorites) RefreshCache(ctx context.Context) {
 	case f.reqChan <- req:
 	case <-ctx.Done():
 		f.wg.Done()
+		<-f.refreshWaiting
 		return
 	}
 }
