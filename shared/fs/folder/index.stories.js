@@ -29,6 +29,7 @@ export default () => {
           routePath={I.List([])}
           shouldShowSFMIBanner={false}
           resetBannerType="none"
+          offline={false}
         />
       </Kb.Box2>
     ))
@@ -39,6 +40,7 @@ export default () => {
           routePath={I.List([])}
           shouldShowSFMIBanner={true}
           resetBannerType="none"
+          offline={false}
         />
       </Kb.Box2>
     ))
@@ -49,6 +51,7 @@ export default () => {
           routePath={I.List([])}
           shouldShowSFMIBanner={false}
           resetBannerType="self"
+          offline={false}
         />
       </Kb.Box2>
     ))
@@ -59,6 +62,18 @@ export default () => {
           routePath={I.List([])}
           shouldShowSFMIBanner={false}
           resetBannerType={1}
+          offline={false}
+        />
+      </Kb.Box2>
+    ))
+    .add('offline and not synced', () => (
+      <Kb.Box2 direction="horizontal" fullWidth={true} fullHeight={true}>
+        <Folder
+          path={Types.stringToPath('/keybase/private/others,reset')}
+          routePath={I.List([])}
+          shouldShowSFMIBanner={false}
+          resetBannerType="none"
+          offline={true}
         />
       </Kb.Box2>
     ))
