@@ -1026,31 +1026,31 @@ func (d *Service) ConfigRPCServer() (net.Listener, error) {
 	return listener, nil
 }
 
-func (d *Service) Stop(exitCode keybase1.ExitCode) {
+func (d *Service) Stop(mctx libkb.MetaContext, exitCode keybase1.ExitCode) {
 	d.stopCh <- exitCode
 }
 
-func (d *Service) StopAll(exitCode keybase1.ExitCode) {
+func (d *Service) StopAll(mctx libkb.MetaContext, exitCode keybase1.ExitCode) {
 	err := d.stopProcess("Keybase", false)
 	if err != nil {
-		d.G().Log.Debug("Error killing Keybase (gui): %s", err)
+		mctx.Debug("Error killing Keybase (gui): %s", err)
 	}
 
 	// NOTE KBFS catches the SIGTERM and attempts to unmount mountdir before terminating,
 	// 		so we don't have to do it ourselves.
 	err = d.stopProcess("kbfsfuse", false)
 	if err != nil {
-		d.G().Log.Debug("Error killing kbfsfuse: %s", err)
+		mctx.Debug("Error killing kbfsfuse: %s", err)
 	}
 
 	// NOTE killall only inspects the first 15 characters; we need to use pkill -f
 	err = d.stopProcess("keybase-redirector", true)
 	if err != nil {
-		d.G().Log.Debug("Error killing keybase-redirector: %s", err)
+		mctx.Debug("Error killing keybase-redirector: %s", err)
 	}
 
 	// service
-	d.Stop(exitCode)
+	d.Stop(mctx, exitCode)
 }
 
 func (d *Service) stopProcess(process string, usePkillFull bool) error {
